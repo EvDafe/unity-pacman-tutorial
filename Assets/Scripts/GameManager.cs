@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    public Ghost[] ghosts;
+    public Ghost[] ghostsPrefabs;
     public Pacman pacman;
     public Transform pellets;
 
@@ -30,7 +30,7 @@ public class GameManager : MonoBehaviour
     private void NewGame()
     {
         SetScore(0);
-        SetLives(3);
+        SetLives(1);
         NewRound();
     }
 
@@ -42,24 +42,15 @@ public class GameManager : MonoBehaviour
             pellet.gameObject.SetActive(true);
         }
 
-        ResetState();
     }
 
-    private void ResetState()
-    {
-        for (int i = 0; i < ghosts.Length; i++) {
-            ghosts[i].ResetState();
-        }
-
-        pacman.ResetState();
-    }
 
     private void GameOver()
     {
         gameOverText.enabled = true;
 
-        for (int i = 0; i < ghosts.Length; i++) {
-            ghosts[i].gameObject.SetActive(false);
+        for (int i = 0; i < ghostsPrefabs.Length; i++) {
+            ghostsPrefabs[i].gameObject.SetActive(false);
         }
 
         pacman.gameObject.SetActive(false);
@@ -83,11 +74,7 @@ public class GameManager : MonoBehaviour
 
         SetLives(lives - 1);
 
-        if (lives > 0) {
-            Invoke(nameof(ResetState), 3f);
-        } else {
-            GameOver();
-        }
+        GameOver();
     }
 
     public void GhostEaten(Ghost ghost)
@@ -110,18 +97,14 @@ public class GameManager : MonoBehaviour
             Invoke(nameof(NewRound), 3f);
         }
     }
-
-    public void PowerPelletEaten(PowerPellet pellet)
+    public void EatTablet(PowerPellet tablet)
     {
-        for (int i = 0; i < ghosts.Length; i++) {
-            ghosts[i].frightened.Enable(pellet.duration);
-        }
+        tablet.gameObject.SetActive(false);
 
-        PelletEaten(pellet);
-        CancelInvoke(nameof(ResetGhostMultiplier));
-        Invoke(nameof(ResetGhostMultiplier), pellet.duration);
+        SetScore(score + tablet.points);
+
+        CreateGhost();
     }
-
     private bool HasRemainingPellets()
     {
         foreach (Transform pellet in pellets)
@@ -139,4 +122,9 @@ public class GameManager : MonoBehaviour
         ghostMultiplier = 1;
     }
 
+    private void CreateGhost()
+    {
+        var ghostPrefab = ghostsPrefabs[Random.Range(0, ghostsPrefabs.Length)];
+        Instantiate(ghostPrefab, pacman.transform.position, Quaternion.identity);
+    }
 }
